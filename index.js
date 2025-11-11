@@ -62,6 +62,14 @@ async function run() {
         res.send(result);
     })
 
+// Get Top 6 Reviews (sorted by rating)
+app.get("/top-reviews", async (req, res) => {
+  const cursor = reviewCollection.find().sort({ rating: -1 }).limit(6);
+  const result = await cursor.toArray();
+  res.send(result);
+});
+
+
 // delete
      app.delete("/reviews/:id", async(req,res) =>{
       const id = req.params.id;
