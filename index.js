@@ -70,6 +70,14 @@ app.get("/top-reviews", async (req, res) => {
 });
 
 
+// for single review details
+app.get("/reviews/:id", async (req, res) => {
+  const id = req.params.id;
+  const review = await reviewCollection.findOne({ _id: new ObjectId(id) });
+  res.send(review);
+});
+
+
 // delete
      app.delete("/reviews/:id", async(req,res) =>{
       const id = req.params.id;
