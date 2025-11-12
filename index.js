@@ -44,9 +44,17 @@ async function run() {
 // Insert
      app.post("/reviews", async(req,res) =>{
         const newReviews =req.body;
+        newReviews.date = new Date();
         const result = await reviewCollection.insertOne(newReviews);
         res.send(result);
     })
+    // Sort by date descending
+    app.get("/reviews", async (req, res) => {
+  const cursor = reviewCollection.find().sort({ date: -1 }); 
+  const result = await cursor.toArray();
+  res.send(result);
+});
+
 // Update
      app.patch("/reviews/:id", async(req, res) =>{
       const id = req.params.id;
