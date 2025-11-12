@@ -55,20 +55,7 @@ async function run() {
   res.send(result);
 });
 
-// Update
-     app.patch("/reviews/:id", async(req, res) =>{
-      const id = req.params.id;
-       const updateReviews =req.body;
-      const query = {_id: new ObjectId(id)}
-      const update ={
-        $set:{
-          name: updateReviews.name,
-          price: updateReviews.price
-        }
-      }
-       const result = await reviewCollection.updateOne(query, update);
-        res.send(result);
-    })
+
 
 // Get Top 6 Reviews (sorted by rating)
 app.get("/top-reviews", async (req, res) => {
@@ -99,6 +86,23 @@ app.get("/my-reviews/:email", async (req, res) => {
       const reviews = await reviewCollection.find({ email }).sort({ date: -1 }).toArray();
       res.send(reviews);
     });
+
+// Update review
+app.patch("/reviews/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const updatedData = req.body; 
+    const result = await reviewCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updatedData }
+    );
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ error: "Update failed" });
+  }
+});
+
 
 
 
