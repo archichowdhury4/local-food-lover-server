@@ -93,6 +93,14 @@ app.get("/reviews/:id", async (req, res) => {
       const result = await reviewCollection.deleteOne(query)
       res.send(result)
     })
+// my reviews
+app.get("/my-reviews/:email", async (req, res) => {
+      const email = req.params.email;
+      const reviews = await reviewCollection.find({ email }).sort({ date: -1 }).toArray();
+      res.send(reviews);
+    });
+
+
 
 
     // usersCollection
