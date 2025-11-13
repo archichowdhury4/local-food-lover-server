@@ -35,6 +35,7 @@ async function run() {
     const db = client.db("review_db")
     const reviewCollection = db.collection("reviews")
     const usersCollection = db.collection("users")
+    const favoriteCollection = db.collection("favorites");
     // reviewCollection 
      app.get("/reviews", async(req,res) =>{
       const cursor = reviewCollection.find();
@@ -103,26 +104,80 @@ app.patch("/reviews/:id", async (req, res) => {
   }
 });
 
+  // Top foodies
+  app.get("/top-foodies", async (req, res) => {
+    const users = await usersCollection.find().toArray();
+    const top = users.map(u => ({
+      name: u.name,
+      photo: u.photo || "",
+      reviewsCount: u.reviews?.length || 0
+    }))
+    .sort((a,b)=>b.reviewsCount - a.reviewsCount)
+    .slice(0,10);
+    res.send(top);
+  });
 
 
 
 
     // usersCollection
+   app.post("/users", async (req, res) => {
+      const newUser = req.body;
+      const email = newUser.email;
 
-     app.post('/users', async (req, res) => {
-           const newUser = req.body;
-            const email = req.body.email;
-            const query = { email: email }
-            const existingUser = await usersCollection.findOne(query);
+      if (!email) {
+        return res.status(400).send({ message: "Email is required" });
+      }
 
-            if (existingUser) {
-                res.send({ message: 'user already exits. do not need to insert again' })
-            }
-            else {
-                const result = await usersCollection.insertOne(newUser);
-                res.send(result);
-            }
-        })
+      const existingUser = await usersCollection.findOne({ email });
+      if (existingUser) {
+        return res.send({ message: "User already exists" });
+      }
+
+      const result = await usersCollection.insertOne(newUser);
+      console.log("New user inserted:", newUser);
+      res.send(result);
+    });
+
+    // Get all users
+    app.get("/users", async (req, res) => {
+      const users = await usersCollection.find().toArray();
+      res.send(users);
+    });
+// Favorites API
+app.get("/favorites", async (req, res) => {
+  const email = req.query.email;
+  const cursor = await favoriteCollection.find({ email }).toArray();
+  res.send(cursor);
+});
+
+// POST: add favorite
+app.post("/favorites", async (req, res) => {
+  const favorite = req.body;
+  const existing = await favoriteCollection.findOne({
+    email: favorite.email,
+    reviewId: favorite.reviewId,
+  });
+  if (existing) return res.status(400).json({ message: "Already added to favorites" });
+  const result = await favoriteCollection.insertOne(favorite);
+  res.send(result);
+});
+
+// GET: get user favorites
+app.get("/favorites/:email", async (req, res) => {
+  const email = req.params.email;
+  const favorites = await favoriteCollection.find({ email }).toArray();
+  res.send(favorites);
+});
+
+// DELETE: remove favorite
+app.delete("/favorites/:id", async (req, res) => {
+  const id = req.params.id;
+  const result = await favoriteCollection.deleteOne({ _id: new ObjectId(id) });
+  res.send(result);
+});
+
+
 
      await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
