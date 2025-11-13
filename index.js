@@ -128,7 +128,7 @@ app.patch("/reviews/:id", async (req, res) => {
       }
 
       try {
-        // Check if user already exists
+        // user already exists
         const existingUser = await usersCollection.findOne({ email: user.email });
         if (existingUser) {
           return res.send({ success: true, message: "User already exists!", user: existingUser });
@@ -149,7 +149,7 @@ app.patch("/reviews/:id", async (req, res) => {
       }
     });
 
-    // ✅ Get all users (optional)
+    //all user
     app.get('/users', async (req, res) => {
       const users = await usersCollection.find().toArray();
       res.send(users);
