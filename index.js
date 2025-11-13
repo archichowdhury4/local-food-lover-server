@@ -120,30 +120,41 @@ app.patch("/reviews/:id", async (req, res) => {
 
 
 
-    // usersCollection
-   app.post("/users", async (req, res) => {
-      const newUser = req.body;
-      const email = newUser.email;
+  app.post('/users', async (req, res) => {
+      const user = req.body;
 
-      if (!email) {
-        return res.status(400).send({ message: "Email is required" });
+      if (!user?.email) {
+        return res.status(400).send({ success: false, message: "Email is required!" });
       }
 
-      const existingUser = await usersCollection.findOne({ email });
-      if (existingUser) {
-        return res.send({ message: "User already exists" });
-      }
+      try {
+        // Check if user already exists
+        const existingUser = await usersCollection.findOne({ email: user.email });
+        if (existingUser) {
+          return res.send({ success: true, message: "User already exists!", user: existingUser });
+        }
 
-      const result = await usersCollection.insertOne(newUser);
-      console.log("New user inserted:", newUser);
-      res.send(result);
+        // Insert new user
+        const result = await usersCollection.insertOne({
+          name: user.name,
+          email: user.email,
+          image: user.image || "",
+          createdAt: new Date(),
+        });
+
+        res.send({ success: true, message: "User added successfully!", result });
+      } catch (error) {
+        console.error("Error saving user:", error);
+        res.status(500).send({ success: false, message: "Server error while saving user." });
+      }
     });
 
-    // Get all users
-    app.get("/users", async (req, res) => {
+    // ✅ Get all users (optional)
+    app.get('/users', async (req, res) => {
       const users = await usersCollection.find().toArray();
       res.send(users);
     });
+
 // Favorites API
 app.get("/favorites", async (req, res) => {
   const email = req.query.email;
@@ -151,7 +162,7 @@ app.get("/favorites", async (req, res) => {
   res.send(cursor);
 });
 
-// POST: add favorite
+// POST favorite
 app.post("/favorites", async (req, res) => {
   const favorite = req.body;
   const existing = await favoriteCollection.findOne({
@@ -163,14 +174,14 @@ app.post("/favorites", async (req, res) => {
   res.send(result);
 });
 
-// GET: get user favorites
+// get user favorites
 app.get("/favorites/:email", async (req, res) => {
   const email = req.params.email;
   const favorites = await favoriteCollection.find({ email }).toArray();
   res.send(favorites);
 });
 
-// DELETE: remove favorite
+// DELETE favorite
 app.delete("/favorites/:id", async (req, res) => {
   const id = req.params.id;
   const result = await favoriteCollection.deleteOne({ _id: new ObjectId(id) });
